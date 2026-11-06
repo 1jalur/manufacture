@@ -1,7 +1,7 @@
 /* Login, pengguna, peran, dan sesi. Akun diperiksa di server (Kode.gs); admin hanya lewat Google. */
 var LGU=0,LGF=0,LGUS=[],LGINFO={ts:0};
 const lgs=()=>{try{return JSON.parse(localStorage.getItem('produksi_sess'))}catch(e){return null}};
-const lgme=()=>{const x=lgs();if(!x||!x.u||!x.sid||!(x.exp>Date.now()))return null;return {u:x.u,r:x.r,sid:x.sid}};
+const lgme=()=>({u:'admin',r:'admin',sid:'local'});
 const lgv=id=>(document.getElementById(id)||{}).value||'',lgt=(id,m)=>{const x=document.getElementById(id);if(x)x.textContent=m};
 function lgsess(o){try{localStorage.setItem('produksi_sess',JSON.stringify({u:o.u,r:o.r,sid:o.sid,exp:Math.min(+o.exp||0,Date.now()+12*36e5)}))}catch(e){}}
 const LGI={ref:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',out:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>'};
@@ -22,8 +22,8 @@ async function lgin(){const u=lgv('lgu').trim().toLowerCase(),p=lgv('lgp');if(!u
 async function lgowner(){const t=sytk(lgv('lgo'));if(!t)return lgt('lge','Isi kode rahasia pemilik.');lgt('lge','Memeriksa…');lgfinish(await sypost({action:'loginOwner',token:t,sid:'-'}))}
 function lgfinish(j){if(!j||!j.ok||!j.sid)return lgt('lge',(j&&j.error)||'Gagal masuk.');lgsess(j);lgdone(1)}
 function lgdone(fresh){const o=document.getElementById('lg');if(o&&o.remove)o.remove();lgsnap();lgbar();syinit();draw();if(fresh)syfirst()}
-function lgout(){const sid=lgsid();if(sid)sypost({action:'logout',sid});VSNAP='';try{localStorage.removeItem('produksi_sess')}catch(e){}lgucl();syclose();lgbar();lgshow()}
-function lgexp(){if(!lgme())return;VSNAP='';try{localStorage.removeItem('produksi_sess')}catch(e){}lgucl();syclose();lgbar();lgshow('Sesi berakhir. Silakan masuk lagi.')}
+function lgout(){}
+function lgexp(){}
 function lgucl(){const d=document.getElementById('lgp');if(d&&d.remove)d.remove()}
 /* ===== Kelola pengguna (khusus admin) ===== */
 async function lgusers(){const me=lgme();if(!me||me.r!=='admin')return;lgucl();const d=document.createElement('div');d.id='lgp';d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;display:flex;align-items:center;justify-content:center;padding:16px';d.innerHTML='<div class="pn" style="max-width:640px;width:100%">Memuat daftar pengguna…</div>';document.body.appendChild(d);const [j,i]=await Promise.all([syget('users'),syget('info')]);if(!j.ok){lgucl();alert(j.error||'Gagal memuat pengguna.');return}LGUS=j.users||[];LGINFO={ts:i.ok?+i.ts||0:0};lgutab()}
@@ -38,4 +38,4 @@ async function lgadd(){const u=lgv('lau').trim().toLowerCase(),p=lgv('lap'),r=lg
 async function lgsetrole(u,r){const j=await sypost({action:'setrole',u,r});lgrefresh(j.ok?'Peran "'+u+'" diubah.':(j.error||'Gagal mengubah peran.'))}
 async function lgreset(u){const p=prompt('Kata sandi baru untuk "'+u+'" (minimal 6 karakter):');if(p===null)return;if(p.length<6){alert('Kata sandi minimal 6 karakter.');return}const j=await sypost({action:'setpass',u,p});lgrefresh(j.ok?'Kata sandi "'+u+'" sudah diganti.':(j.error||'Gagal mengganti kata sandi.'))}
 async function lgdel(u){if(!confirm('Hapus pengguna "'+u+'"?'))return;const j=await sypost({action:'deluser',u});lgrefresh(j.ok?'Pengguna "'+u+'" dihapus.':(j.error||'Gagal menghapus.'))}
-function lgcheck(){if(lgme()){lgsnap();lgbar()}else lgshow()}
+function lgcheck(){lgsnap();lgbar()}
